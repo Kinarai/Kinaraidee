@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>กินอะไรดี - จัดเมนูเด็ดพร้อมตะกร้าสินค้าทุกห้าง</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel for In-browser JSX Transpilation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;500;600;700&family=Prompt:wght@300;400;600;700;900&display=swap');
+        :root { --font-main: 'Anuphan', sans-serif; --font-heading: 'Prompt', sans-serif; }
+        body { font-family: var(--font-main); background-color: #0B0E14; color: #e2e8f0; }
+        h1, h2, h3, h4, .font-heading { font-family: var(--font-heading); }
+        .animate-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .btn-shopee { background-color: #ee4d2d; }
+        .btn-lazada { background-color: #0f146d; }
+        .btn-bigc { background-color: #009136; }
+        .btn-lotus { background-color: #00b2a9; }
+        .recipe-card { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid rgba(255, 255, 255, 0.08); background: rgba(22, 27, 34, 0.6); }
+        .recipe-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5); border-color: rgba(249, 115, 22, 0.4); }
+    </style>
+</head>
+<body class="antialiased">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, Fragment } = React;
+
+        const Icon = ({ name, size = 24, className = "" }) => {
+            const icons = {
+                Plus: <path d="M5 12h14M12 5v14"/>,
+                X: <path d="M18 6 6 18M6 6l12 12"/>,
+                Utensils: <Fragment><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></Fragment>,
+                Clock: <Fragment><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></Fragment>,
+                Flame: <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>,
+                Search: <Fragment><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></Fragment>,
+                Loader2: <Fragment><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></Fragment>,
+                RotateCcw: <Fragment><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></Fragment>,
+                ChevronRight: <path d="m9 18 6-6-6-6"/>,
+                ListChecks: <Fragment><path d="m3 17 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></Fragment>,
+                ShoppingBag: <Fragment><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></Fragment>,
+                ImageOff: <Fragment><line x1="3" y1="3" x2="21" y2="21"/><path d="M15 3h4a2 2 0 0 1 2 2v10m-2 2h-4M5 5.5V19a2 2 0 0 0 2 2h10m-6.5-6.5L6 19M10.5 10.5l-2-2"/></Fragment>
+            };
+            return (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`${className} ${name === 'Loader2' ? 'animate-spin' : ''}`}>
+                    {icons[name] || null}
+                </svg>
+            );
+        };
+
+        const POPULAR_INGREDIENTS = ['หมูสับ', 'อกไก่', 'ไข่ไก่', 'กุ้งสด', 'ปลาหมึก', 'กะหล่ำปลี', 'แครอท', 'บร็อคโคลี่', 'เห็ดเข็มทอง', 'กระเทียม', 'ชีส', 'บะหมี่กึ่งสำเร็จรูป', 'ข้าวสวย', 'เต้าหู้ขาว', 'มันฝรั่ง'];
+
+        // ✅ อัปเดตใหม่: ระบบต่อคิวโหลดรูป และใช้ Prompt ภาษาอังกฤษ 100% ป้องกันรูปมั่ว
+        const RecipeImage = ({ prompt, alt, index }) => {
+            const [status, setStatus] = useState('waiting'); // waiting, loading, success, error
+            const [imgUrl, setImgUrl] = useState(null);
+
+            useEffect(() => {
+                let isMounted = true;
+                
+                // หน่วงเวลาให้คิววาดรูป (ห่างกันเมนูละ 1.2 วินาที) ไม่ให้เซิร์ฟเวอร์โดนบล็อก
+                const delay = index * 1200;
+                
+                const timer = setTimeout(() => {
+                    if (!isMounted) return;
+                    setStatus('loading');
+                    
+                    // ใช้ english_image_prompt จากหลังบ้าน (ถ้าไม่มีให้ใช้ชื่ออาหารแทน)
+                    const safePrompt = prompt ? prompt : alt;
+                    // บังคับสไตล์ภาพให้ออกมาเป็นภาพถ่ายอาหารที่น่ากินจริงๆ
+                    const finalPrompt = `${safePrompt}, professional food photography, appetizing, highly detailed, high resolution, top-down view, restaurant quality`;
+                    const seed = Math.floor(Math.random() * 1000000);
+                    
+                    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=600&height=600&nologo=true&seed=${seed}`;
+                    setImgUrl(url);
+                }, delay);
+
+                return () => {
+                    isMounted = false;
+                    clearTimeout(timer);
+                };
+            }, [prompt, alt, index]);
+
+            return (
+                <div className="relative w-full h-full min-h-[320px] bg-[#0f1219] flex items-center justify-center overflow-hidden border-b md:border-b-0 md:border-r border-white/5">
+                    {status === 'waiting' && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500">
+                            <Icon name="Clock" size={28} className="text-orange-500/40 mb-3 animate-pulse" />
+                            <span className="text-[10px] font-bold tracking-widest uppercase opacity-60">รอคิวจัดจาน...</span>
+                        </div>
+                    )}
+                    
+                    {status === 'loading' && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500">
+                            <Icon name="Loader2" size={32} className="text-orange-500 mb-4 animate-spin" />
+                            <span className="text-[10px] font-bold tracking-widest uppercase opacity-70">กำลังรังสรรค์ภาพ...</span>
+                        </div>
+                    )}
+
+                    {imgUrl && (
+                        <img
+                            src={imgUrl}
+                            alt={alt}
+                            className={`w-full h-full object-cover transition-all duration-1000 ${status === 'success' ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`}
+                            onLoad={() => setStatus('success')}
+                            onError={() => setStatus('error')}
+                        />
+                    )}
+
+                    {status === 'error' && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 bg-[#161B22]">
+                            <Icon name="ImageOff" size={32} className="mb-3 opacity-30 text-orange-500" />
+                            <span className="text-[10px] font-bold tracking-widest uppercase opacity-60">ภาพไม่พร้อมใช้งาน</span>
+                            <span className="text-[9px] mt-1 opacity-40">({alt})</span>
+                        </div>
+                    )}
+                    
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0B0E14] via-transparent to-transparent opacity-60 pointer-events-none"></div>
+                </div>
+            );
+        };
+
+        function App() {
+            const [ingredients, setIngredients] = useState([]);
+            const [inputValue, setInputValue] = useState('');
+            const [recipes, setRecipes] = useState([]);
+            const [loading, setLoading] = useState(false);
+            const [error, setError] = useState('');
+
+            const handleAdd = (e) => { e?.preventDefault(); if (inputValue.trim() && !ingredients.includes(inputValue.trim())) { setIngredients([...ingredients, inputValue.trim()]); setInputValue(''); } };
+            
+            const generateRecipes = async () => {
+                if (ingredients.length === 0) return;
+                setLoading(true); setError('');
+                try {
+                    const response = await fetch('/api/proxy', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ task: 'gemini', ingredients: ingredients.join(', ') })
+                    });
+                    const data = await response.json();
+                    
+                    if (data.error) throw new Error(data.error);
+
+                    if (data.recipes) {
+                        setRecipes(data.recipes);
+                        setTimeout(() => document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' }), 100);
+                    } else throw new Error("ข้อมูลเมนูที่ได้รับไม่ถูกต้อง");
+                } catch (err) {
+                    setError(`พบปัญหา: ${err.message}`);
+                } finally { setLoading(false); }
+            };
+
+            const openStore = (platform, product) => {
+                const ep = encodeURIComponent(product);
+                const urls = {
+                    shopee: `https://shopee.co.th/search?keyword=${ep}`,
+                    lazada: `https://www.lazada.co.th/catalog/?q=${ep}`,
+                    bigc: `https://www.bigc.co.th/search?q=${ep}`,
+                    lotus: `https://www.lotuss.com/en/search/${ep}`
+                };
+                window.open(urls[platform], '_blank');
+            };
+
+            return (
+                <div className="min-h-screen pb-32 p-6 max-w-5xl mx-auto">
+                    <header className="flex justify-between items-center mb-16 animate-in">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-gradient-to-br from-orange-400 to-orange-600 p-2.5 rounded-2xl shadow-lg shadow-orange-500/20"><Icon name="Utensils" className="text-white" size={24} /></div>
+                            <h1 className="text-2xl font-black uppercase tracking-tight">กินอะไร<span className="text-orange-500">ดี</span></h1>
+                        </div>
+                        <button onClick={() => {setIngredients([]); setRecipes([]);}} className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-bold uppercase transition-all"><Icon name="RotateCcw" size={14} /> เริ่มใหม่</button>
+                    </header>
+
+                    <section className="text-center mb-20 animate-in">
+                        <h2 className="text-5xl md:text-7xl font-black mb-6 leading-tight">มื้อนี้ <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">กินอะไรดี</span></h2>
+                        <p className="text-slate-400 text-lg mb-12 max-w-xl mx-auto">ระบุวัตถุดิบที่คุณมีในตู้เย็น แล้วเราจะจัด <span className="text-white font-bold">10 เมนูเด็ด</span> ให้คุณทันที</p>
+
+                        <div className="max-w-2xl mx-auto bg-[#161B22]/80 p-8 md:p-10 rounded-[3rem] border border-white/5 shadow-2xl backdrop-blur-md">
+                            <form onSubmit={handleAdd} className="flex gap-3 mb-8">
+                                <input value={inputValue} onChange={e => setInputValue(e.target.value)} placeholder="พิมพ์ชื่อวัตถุดิบ..." className="flex-1 bg-[#0B0E14] border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-orange-500/50 transition-all font-medium placeholder:opacity-30" />
+                                <button type="submit" className="bg-orange-500 text-white p-4 rounded-2xl hover:bg-orange-600 shadow-lg shadow-orange-500/20 active:scale-90 transition-all"><Icon name="Plus" /></button>
+                            </form>
+                            
+                            <div className="mb-10">
+                                <p className="text-sm font-black uppercase text-slate-500 tracking-[0.2em] mb-5">วัตถุดิบยอดนิยม</p>
+                                <div className="flex flex-wrap gap-3 justify-center">
+                                    {POPULAR_INGREDIENTS.filter(i => !ingredients.includes(i)).map(item => (
+                                        <button key={item} onClick={() => setIngredients([...ingredients, item])} className="px-6 py-3 bg-slate-800/40 hover:bg-slate-700 text-slate-200 rounded-xl text-base font-bold border border-white/5 transition-all hover:-translate-y-0.5 shadow-md">{item}</button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-2 mb-10 justify-center">
+                                {ingredients.map(item => (
+                                    <span key={item} className="bg-orange-500/10 text-orange-400 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 border border-orange-500/20 group">
+                                        {item} 
+                                        <Icon name="X" size={14} className="cursor-pointer hover:text-white transition-colors" onClick={() => setIngredients(ingredients.filter(i => i !== item))} />
+                                    </span>
+                                ))}
+                            </div>
+                            
+                            {ingredients.length > 0 && (
+                                <button onClick={generateRecipes} disabled={loading} className="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white py-5 rounded-[2rem] font-black text-xl shadow-xl shadow-orange-500/20 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3 transition-all">
+                                    {loading ? <Icon name="Loader2" size={28} /> : <Icon name="Utensils" size={28} />} 
+                                    {loading ? 'เชฟกำลังปรุงสูตร...' : 'รังสรรค์เมนูเด็ดเพื่อคุณ'}
+                                </button>
+                            )}
+                        </div>
+                    </section>
+
+                    {recipes.length > 0 && (
+                        <div id="results" className="space-y-16 animate-in">
+                            <div className="flex items-center gap-4 border-l-4 border-orange-500 pl-6 mb-12">
+                                <h3 className="text-3xl font-black uppercase tracking-tight">สำรับเมนูแนะนำเพื่อคุณ</h3>
+                            </div>
+                            <div className="grid gap-12">
+                                {recipes.map((recipe, i) => (
+                                    <article key={i} className="recipe-card rounded-[3rem] overflow-hidden flex flex-col md:flex-row shadow-2xl">
+                                        
+                                        {/* กล่องรูปภาพด้านซ้าย */}
+                                        <div className="w-full md:w-[40%] shrink-0">
+                                            <RecipeImage prompt={recipe.english_image_prompt} alt={recipe.name} index={i} />
+                                        </div>
+                                        
+                                        {/* ข้อมูลเมนูด้านขวา */}
+                                        <div className="w-full md:w-[60%] p-8 md:p-12 flex-1 flex flex-col relative z-10">
+                                            <div className="flex flex-wrap items-center gap-3 mb-6">
+                                                <div className="bg-orange-500/10 text-orange-500 px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase flex items-center gap-1.5 border border-orange-500/20"><Icon name="Clock" size={12}/> {recipe.time}</div>
+                                                <div className="bg-white/5 text-slate-400 px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase flex items-center gap-1.5 border border-white/10"><Icon name="Flame" size={12}/> {recipe.difficulty}</div>
+                                            </div>
+                                            
+                                            <h4 className="text-3xl md:text-4xl font-bold mb-4 text-orange-400 leading-tight">{recipe.name}</h4>
+                                            
+                                            <p className="text-slate-400 text-lg italic mb-10 leading-relaxed opacity-90 border-l-2 border-orange-500/30 pl-6 py-1">"{recipe.description}"</p>
+
+                                            <div className="mb-10 p-6 bg-gradient-to-br from-white/[0.05] to-transparent border border-white/10 rounded-[2rem] animate-in shadow-inner">
+                                                <div className="flex items-center gap-2 mb-4 text-orange-400"><Icon name="ShoppingBag" size={16} /><span className="text-[11px] font-black uppercase tracking-widest opacity-80">ไอเทมลับประจำเมนู</span></div>
+                                                <p className="text-xl font-bold mb-2 text-white">{recipe.recommended_product}</p>
+                                                <p className="text-sm text-slate-400 italic mb-6">"{recipe.affiliate_hint}"</p>
+                                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                                    {['shopee', 'lazada', 'bigc', 'lotus'].map(p => (
+                                                        <button key={p} onClick={() => openStore(p, recipe.recommended_product)} className={`btn-${p} text-white py-3 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all hover:scale-[1.02] active:scale-95 shadow-lg`}>{p}</button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8 border-t border-white/10 mt-auto">
+                                                <div>
+                                                    <h5 className="text-xs font-black uppercase text-slate-500 tracking-[0.3em] mb-6 flex items-center gap-2"><Icon name="Utensils" size={16} className="text-orange-500/70" /> วัตถุดิบที่ใช้</h5>
+                                                    <ul className="space-y-4 bg-black/20 p-6 rounded-2xl border border-white/5">
+                                                        {recipe.ingredients.map((ing, idx) => (
+                                                            <li key={idx} className="text-[15px] font-medium text-slate-200 flex items-start gap-3">
+                                                                <Icon name="ChevronRight" size={16} className="mt-1 text-orange-500" />
+                                                                <span>{ing}</span>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                                <div>
+                                                    <h5 className="text-xs font-black uppercase text-slate-500 tracking-[0.3em] mb-6 flex items-center gap-2"><Icon name="ListChecks" size={16} className="text-orange-500/70" /> ขั้นตอนวิธีทำ</h5>
+                                                    <div className="space-y-6">
+                                                        {recipe.instructions.map((step, idx) => (
+                                                            <div key={idx} className="flex gap-5">
+                                                                <span className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-red-500 text-white text-[12px] font-black flex items-center justify-center shadow-md">{idx + 1}</span>
+                                                                <p className="text-[15px] text-slate-300 leading-relaxed pt-1">{step}</p>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </article>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {error && (
+                        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-red-600 text-white px-8 py-5 rounded-[2rem] shadow-2xl flex items-center gap-5 z-[110] animate-in border border-white/20">
+                            <div className="max-w-xs text-sm font-bold leading-tight">{error}</div>
+                            <button onClick={() => setError('')} className="bg-black/20 hover:bg-black/40 rounded-full p-2 transition-all"><Icon name="X" size={18} /></button>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
